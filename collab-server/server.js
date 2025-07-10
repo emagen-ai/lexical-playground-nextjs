@@ -1,125 +1,129 @@
-const WebSocket = require('ws');
-const Y = require('yjs');
+#!/usr/bin/env node
 
-const PORT = process.env.PORT || 9090;
+/**
+ * 官方 y-websocket 服务器
+ * 
+ * 这是一个基于官方 y-websocket 包的简单服务器实现
+ * 支持多房间协作和文档持久化
+ */
+
+const WebSocket = require('ws')
+const http = require('http')
+const { setupWSConnection } = require('y-websocket/bin/utils')
+
+const PORT = process.env.PORT || 9090
+
+// 创建 HTTP 服务器
+const server = http.createServer((request, response) => {
+  response.writeHead(200, { 'Content-Type': 'text/plain' })
+  response.end('Yjs WebSocket Server\n')
+})
 
 // 创建 WebSocket 服务器
 const wss = new WebSocket.Server({ 
-  port: PORT,
+  server,
   verifyClient: (info) => {
     console.log('WebSocket 连接请求:', {
       origin: info.origin,
-      url: info.req.url
-    });
-    return true; // 允许所有连接
+      url: info.req.url,
+      userAgent: info.req.headers['user-agent']
+    })
+    return true // 允许所有连接
   }
-});
+})
 
-// 存储房间的 Yjs 文档
-const docs = new Map();
-
-function getDoc(docname) {
-  let doc = docs.get(docname);
-  if (!doc) {
-    doc = new Y.Doc();
-    docs.set(docname, doc);
-    console.log(`创建新文档: ${docname}`);
-  }
-  return doc;
-}
+// 连接统计
+let connectionCount = 0
+const rooms = new Set()
 
 wss.on('connection', (ws, req) => {
-  console.log('新的 WebSocket 连接');
+  connectionCount++
+  const connId = connectionCount
   
-  // 解析 URL 获取房间ID
-  const url = new URL(req.url, 'http://localhost');
-  const docname = url.pathname.slice(1) || 'default';
+  console.log(`[${connId}] 新的 WebSocket 连接`)
+  console.log(`[${connId}] URL: ${req.url}`)
+  console.log(`[${connId}] 总连接数: ${wss.clients.size}`)
   
-  console.log(`客户端加入房间: ${docname}`);
+  // 解析房间名称
+  const url = new URL(req.url, 'http://localhost')
+  const roomName = url.pathname.slice(1) || 'default'
+  rooms.add(roomName)
   
-  const doc = getDoc(docname);
+  console.log(`[${connId}] 加入房间: ${roomName}`)
+  console.log(`[${connId}] 活跃房间: ${Array.from(rooms).join(', ')}`)
   
-  // 处理消息
-  ws.on('message', (message) => {
-    try {
-      // Yjs 使用 Uint8Array 格式的消息
-      const uint8Array = new Uint8Array(message);
-      
-      // 应用更新到文档
-      Y.applyUpdate(doc, uint8Array);
-      
-      // 广播给同一房间的其他客户端
-      wss.clients.forEach((client) => {
-        if (client !== ws && 
-            client.readyState === WebSocket.OPEN && 
-            client.docname === docname) {
-          client.send(uint8Array);
-        }
-      });
-      
-      console.log(`转发消息到房间 ${docname}, 消息长度: ${uint8Array.length}`);
-    } catch (error) {
-      console.error('处理消息错误:', error);
-    }
-  });
+  // 使用官方 y-websocket 工具函数设置连接
+  setupWSConnection(ws, req, {
+    // 可选：添加认证逻辑
+    authenticate: (auth) => {
+      console.log(`[${connId}] 认证信息:`, auth)
+      return true // 暂时允许所有连接
+    },
+    // 可选：添加文档持久化 (暂时禁用)
+    persistence: null
+  })
   
-  // 设置客户端的房间名称
-  ws.docname = docname;
-  
-  // 发送当前文档状态给新客户端
-  const stateVector = Y.encodeStateVector(doc);
-  const update = Y.encodeStateAsUpdate(doc, stateVector);
-  if (update.length > 0) {
-    ws.send(update);
-    console.log(`发送初始状态给新客户端, 大小: ${update.length}`);
-  }
-  
-  // 监听文档更新
-  const updateHandler = (update, origin) => {
-    if (origin !== ws) {
-      ws.send(update);
-    }
-  };
-  
-  doc.on('update', updateHandler);
-  
-  ws.on('close', () => {
-    console.log(`客户端断开连接，房间: ${docname}`);
-    doc.off('update', updateHandler);
-    
-    // 检查是否还有其他客户端在这个房间
-    const hasOtherClients = Array.from(wss.clients).some(
-      client => client.docname === docname && client.readyState === WebSocket.OPEN
-    );
-    
-    if (!hasOtherClients) {
-      console.log(`房间 ${docname} 已空，保留文档`);
-      // 可以选择在这里清理文档或保持持久化
-    }
-  });
+  // 监听连接关闭
+  ws.on('close', (code, reason) => {
+    console.log(`[${connId}] 连接关闭 - 代码: ${code}, 原因: ${reason}`)
+    console.log(`[${connId}] 剩余连接数: ${wss.clients.size}`)
+  })
   
   ws.on('error', (error) => {
-    console.error(`WebSocket 错误:`, error);
-  });
-});
+    console.error(`[${connId}] WebSocket 错误:`, error)
+  })
+})
 
+// 服务器错误处理
 wss.on('error', (error) => {
-  console.error('WebSocket 服务器错误:', error);
-});
+  console.error('WebSocket 服务器错误:', error)
+})
 
-console.log(`Yjs WebSocket 服务器运行在端口 ${PORT}`);
-console.log(`WebSocket URL: ws://localhost:${PORT}`);
+// 启动服务器
+server.listen(PORT, () => {
+  console.log('=================================')
+  console.log(`🚀 Yjs WebSocket 服务器已启动`)
+  console.log(`📡 端口: ${PORT}`)
+  console.log(`🔗 WebSocket URL: ws://localhost:${PORT}`)
+  console.log(`🌐 HTTP URL: http://localhost:${PORT}`)
+  console.log('=================================')
+})
 
-// 优雅关闭
-process.on('SIGINT', () => {
-  console.log('正在关闭服务器...');
+// 优雅关闭处理
+const gracefulShutdown = (signal) => {
+  console.log(`\n收到 ${signal} 信号，正在优雅关闭服务器...`)
+  
+  // 关闭 WebSocket 服务器
   wss.close(() => {
-    console.log('服务器已关闭');
-    process.exit(0);
-  });
-});
+    console.log('WebSocket 服务器已关闭')
+    
+    // 关闭 HTTP 服务器
+    server.close(() => {
+      console.log('HTTP 服务器已关闭')
+      console.log('服务器完全关闭，再见！👋')
+      process.exit(0)
+    })
+  })
+}
 
-// 定期清理空文档
+// 监听终止信号
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+// 定期输出统计信息
 setInterval(() => {
-  console.log(`活跃文档数量: ${docs.size}, 活跃连接: ${wss.clients.size}`);
-}, 30000);
+  console.log(`📊 统计 - 活跃连接: ${wss.clients.size}, 活跃房间: ${rooms.size}`)
+  if (rooms.size > 0) {
+    console.log(`📋 房间列表: ${Array.from(rooms).join(', ')}`)
+  }
+}, 30000)
+
+// 进程异常处理
+process.on('uncaughtException', (error) => {
+  console.error('未捕获的异常:', error)
+  gracefulShutdown('uncaughtException')
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('未处理的 Promise 拒绝:', reason, 'at:', promise)
+})
