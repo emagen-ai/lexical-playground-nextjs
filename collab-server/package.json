@@ -1,0 +1,16 @@
+{
+  "name": "lexical-collab-server",
+  "version": "1.0.0",
+  "description": "Yjs WebSocket server for Lexical collaboration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "yjs": "^13.6.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
