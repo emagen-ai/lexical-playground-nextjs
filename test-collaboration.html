@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>协作功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .controls {
+            margin: 15px 0;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 3px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lexical 协作功能测试</h1>
+    
+    <div id="status" class="status disconnected">
+        ❌ 未连接
+    </div>
+    
+    <div class="controls">
+        <input type="text" id="username" placeholder="用户名" value="">
+        <input type="text" id="roomId" placeholder="房间ID" value="test-room">
+        <button onclick="joinRoom()">加入房间</button>
+        <button onclick="leaveRoom()">离开房间</button>
+        <button onclick="clearLog()">清空日志</button>
+    </div>
+    
+    <div>
+        <h3>在线用户：<span id="userList">无</span></h3>
+    </div>
+    
+    <div class="controls">
+        <input type="text" id="messageText" placeholder="发送测试消息" style="width: 300px;">
+        <button onclick="sendTestMessage()">发送操作</button>
+    </div>
+    
+    <div>
+        <h3>连接日志：</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let userId = null;
+        let currentRoom = null;
+        
+        // 生成随机用户名
+        document.getElementById('username').value = 'User-' + Math.random().toString(36).substr(2, 6);
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function updateStatus(connected, message = '') {
+            const statusElement = document.getElementById('status');
+            if (connected) {
+                statusElement.className = 'status connected';
+                statusElement.innerHTML = '🟢 已连接' + (message ? ` - ${message}` : '');
+            } else {
+                statusElement.className = 'status disconnected';
+                statusElement.innerHTML = '❌ 未连接' + (message ? ` - ${message}` : '');
+            }
+        }
+        
+        function connectWebSocket() {
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+            
+            const serverUrl = 'wss://collab-server-production-2ff6.up.railway.app';
+            log(`连接到: ${serverUrl}`);
+            
+            ws = new WebSocket(serverUrl);
+            
+            ws.onopen = () => {
+                log('WebSocket 连接已建立');
+                updateStatus(true);
+            };
+            
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log(`收到消息: ${message.type}`);
+                handleMessage(message);
+            };
+            
+            ws.onclose = (event) => {
+                log(`连接已关闭: 代码=${event.code}, 原因=${event.reason}`);
+                updateStatus(false, '连接已断开');
+                
+                // 3秒后重连
+                if (currentRoom) {
+                    setTimeout(() => {
+                        log('尝试重连...');
+                        connectWebSocket();
+                    }, 3000);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                log(`WebSocket 错误: ${error}`);
+                updateStatus(false, '连接错误');
+            };
+        }
+        
+        function handleMessage(message) {
+            switch (message.type) {
+                case 'join_room':
+                    if (message.data.success) {
+                        userId = message.data.userId;
+                        currentRoom = message.data.roomId;
+                        log(`成功加入房间: ${currentRoom}, 用户ID: ${userId}`);
+                        updateStatus(true, `房间: ${currentRoom}`);
+                    }
+                    break;
+                    
+                case 'user_list':
+                    const usernames = message.data.map(user => user.username).join(', ');
+                    document.getElementById('userList').textContent = usernames || '无';
+                    log(`在线用户: ${usernames}`);
+                    break;
+                    
+                case 'operation':
+                    log(`收到操作: ${JSON.stringify(message.data)}`);
+                    break;
+                    
+                case 'editor_state':
+                    log(`编辑器状态更新`);
+                    break;
+                    
+                case 'error':
+                    log(`服务器错误: ${message.data.message}`);
+                    break;
+            }
+        }
+        
+        function sendMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                log(`发送消息: ${message.type}`);
+            } else {
+                log('WebSocket 未连接，无法发送消息');
+            }
+        }
+        
+        function joinRoom() {
+            const username = document.getElementById('username').value;
+            const roomId = document.getElementById('roomId').value;
+            
+            if (!username || !roomId) {
+                alert('请输入用户名和房间ID');
+                return;
+            }
+            
+            connectWebSocket();
+            
+            // 等待连接建立后发送加入房间消息
+            const checkAndJoin = () => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    sendMessage({
+                        type: 'join_room',
+                        data: { roomId, username }
+                    });
+                } else if (ws && ws.readyState === WebSocket.CONNECTING) {
+                    setTimeout(checkAndJoin, 100);
+                } else {
+                    log('连接失败，无法加入房间');
+                }
+            };
+            
+            setTimeout(checkAndJoin, 100);
+        }
+        
+        function leaveRoom() {
+            if (currentRoom) {
+                sendMessage({
+                    type: 'leave_room',
+                    data: { roomId: currentRoom }
+                });
+                currentRoom = null;
+                userId = null;
+                updateStatus(false, '已离开房间');
+                document.getElementById('userList').textContent = '无';
+            }
+            
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function sendTestMessage() {
+            const text = document.getElementById('messageText').value;
+            if (!text) {
+                alert('请输入测试消息');
+                return;
+            }
+            
+            sendMessage({
+                type: 'operation',
+                data: {
+                    type: 'insert',
+                    data: { text: text, position: 0 }
+                }
+            });
+            
+            document.getElementById('messageText').value = '';
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 页面卸载时清理连接
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                ws.close();
+            }
+        });
+    </script>
+</body>
+</html>
