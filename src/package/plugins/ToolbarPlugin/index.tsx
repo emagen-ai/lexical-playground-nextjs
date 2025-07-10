@@ -62,6 +62,7 @@ import {
 } from '../../context/ToolbarContext';
 import useModal from '../../hooks/useModal';
 import catTypingGif from '../../images/cat-typing.gif';
+import ThemeToggle from '../../ui/ThemeToggle';
 import {$createStickyNode} from '../../nodes/StickyNode';
 import DropDown, {DropDownItem} from '../../ui/DropDown';
 import DropdownColorPicker from '../../ui/DropdownColorPicker';
@@ -1194,6 +1195,8 @@ export default function ToolbarPlugin({
         editor={activeEditor}
         isRTL={toolbarState.isRTL}
       />
+      <Divider />
+      <ThemeToggle />
 
       {modal}
     </div>

@@ -9,6 +9,7 @@
 import type {EditorThemeClasses} from 'lexical';
 
 import './PlaygroundEditorTheme.css';
+import './DarkEditorTheme.css';
 
 const theme: EditorThemeClasses = {
   autocomplete: 'PlaygroundEditorTheme__autocomplete',

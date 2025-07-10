@@ -16,6 +16,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: #eee;
   padding: 0 20px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark body {
+  background: #111827;
+  color: #e5e7eb;
 }
 
 header {

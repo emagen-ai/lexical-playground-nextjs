@@ -25,6 +25,7 @@ import {isDevPlayground} from './appSettings';
 import {FlashMessageContext} from './context/FlashMessageContext';
 import {SettingsContext, useSettings} from './context/SettingsContext';
 import {SharedHistoryContext} from './context/SharedHistoryContext';
+import {ThemeProvider} from './context/ThemeContext';
 import {ToolbarContext} from './context/ToolbarContext';
 import Editor from './Editor';
 import logo from './images/logo.svg';
@@ -235,6 +236,18 @@ function App(): JSX.Element {
 }
 
 export default function PlaygroundApp(): JSX.Element {
+  return (
+    <ThemeProvider>
+      <SettingsContext>
+        <FlashMessageContext>
+          <App />
+        </FlashMessageContext>
+      </SettingsContext>
+    </ThemeProvider>
+  );
+}
+
+function WithThemeToggle(): JSX.Element {
   return (
     <SettingsContext>
       <FlashMessageContext>
