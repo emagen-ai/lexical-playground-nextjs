@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@lexical/headless": "^0.25.0",
+    "@lexical/yjs": "^0.33.0",
     "@next/bundle-analyzer": "^15.1.7",
     "next": "15.3.5",
     "prettier": "^3.5.2",

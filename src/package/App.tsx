@@ -22,7 +22,7 @@ import {
 } from 'lexical';
 
 import {isDevPlayground} from './appSettings';
-import {RealtimeCollaborationProvider} from './collaboration/RealtimeCollaborationProvider';
+import {YjsCollaborationProvider} from './collaboration/YjsCollaborationProvider';
 import {FlashMessageContext} from './context/FlashMessageContext';
 import {SettingsContext, useSettings} from './context/SettingsContext';
 import {SharedHistoryContext} from './context/SharedHistoryContext';
@@ -212,8 +212,7 @@ function App(): JSX.Element {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <RealtimeCollaborationProvider>
-        <SharedHistoryContext>
+      <SharedHistoryContext>
           <TableContext>
             <ToolbarContext>
               <header>
@@ -233,7 +232,6 @@ function App(): JSX.Element {
             </ToolbarContext>
           </TableContext>
         </SharedHistoryContext>
-      </RealtimeCollaborationProvider>
     </LexicalComposer>
   );
 }

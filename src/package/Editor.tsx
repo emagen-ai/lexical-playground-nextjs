@@ -31,7 +31,7 @@ import {useEffect, useState} from 'react';
 import {CAN_USE_DOM} from '../package/shared/src/canUseDOM';
 
 import {createWebsocketProvider} from './collaboration';
-import {CollaborationPlugin as RealtimeCollaborationPlugin} from './collaboration/CollaborationPlugin';
+import {YjsCollaborationProvider} from './collaboration/YjsCollaborationProvider';
 import {useSettings} from './context/SettingsContext';
 import {useSharedHistoryContext} from './context/SharedHistoryContext';
 import ActionsPlugin from './plugins/ActionsPlugin';
@@ -181,10 +181,9 @@ export default function Editor(): JSX.Element {
         {isRichText ? (
           <>
             {isCollab ? (
-              <CollaborationPlugin
-                id="main"
-                providerFactory={createWebsocketProvider}
-                shouldBootstrap={!skipCollaborationInit}
+              <YjsCollaborationProvider
+                roomId="main"
+                username={`User-${Math.random().toString(36).substr(2, 6)}`}
               />
             ) : (
               <HistoryPlugin externalHistoryState={historyState} />
@@ -226,7 +225,6 @@ export default function Editor(): JSX.Element {
             <CollapsiblePlugin />
             <PageBreakPlugin />
             <LayoutPlugin />
-            <RealtimeCollaborationPlugin enabled={true} />
             {floatingAnchorElem && !isSmallWidthViewport && (
               <>
                 <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
