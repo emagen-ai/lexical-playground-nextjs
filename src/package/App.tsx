@@ -22,6 +22,7 @@ import {
 } from 'lexical';
 
 import {isDevPlayground} from './appSettings';
+import {RealtimeCollaborationProvider} from './collaboration/RealtimeCollaborationProvider';
 import {FlashMessageContext} from './context/FlashMessageContext';
 import {SettingsContext, useSettings} from './context/SettingsContext';
 import {SharedHistoryContext} from './context/SharedHistoryContext';
@@ -211,26 +212,28 @@ function App(): JSX.Element {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <SharedHistoryContext>
-        <TableContext>
-          <ToolbarContext>
-            <header>
-              <a href="https://lexical.dev" target="_blank" rel="noreferrer">
-                <img src={logo} alt="Lexical Logo" />
-              </a>
-            </header>
-            <div className="editor-shell">
-              <Editor />
-            </div>
-            <Settings />
-            {isDevPlayground ? <DocsPlugin /> : null}
-            {isDevPlayground ? <PasteLogPlugin /> : null}
-            {isDevPlayground ? <TestRecorderPlugin /> : null}
+      <RealtimeCollaborationProvider>
+        <SharedHistoryContext>
+          <TableContext>
+            <ToolbarContext>
+              <header>
+                <a href="https://lexical.dev" target="_blank" rel="noreferrer">
+                  <img src={logo} alt="Lexical Logo" />
+                </a>
+              </header>
+              <div className="editor-shell">
+                <Editor />
+              </div>
+              <Settings />
+              {isDevPlayground ? <DocsPlugin /> : null}
+              {isDevPlayground ? <PasteLogPlugin /> : null}
+              {isDevPlayground ? <TestRecorderPlugin /> : null}
 
-            {measureTypingPerf ? <TypingPerfPlugin /> : null}
-          </ToolbarContext>
-        </TableContext>
-      </SharedHistoryContext>
+              {measureTypingPerf ? <TypingPerfPlugin /> : null}
+            </ToolbarContext>
+          </TableContext>
+        </SharedHistoryContext>
+      </RealtimeCollaborationProvider>
     </LexicalComposer>
   );
 }

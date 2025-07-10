@@ -1,0 +1,42 @@
+.collaboration-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.connection-indicator {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.connection-indicator.connected {
+  color: #28a745;
+}
+
+.connection-indicator.disconnected {
+  color: #dc3545;
+}
+
+.user-list {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+/* Dark theme support */
+.dark .collaboration-status {
+  background: rgba(33, 37, 41, 0.95);
+  border-color: #495057;
+  color: #e9ecef;
+}
+
+.dark .user-list {
+  color: #adb5bd;
+}
