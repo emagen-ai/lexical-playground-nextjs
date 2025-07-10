@@ -36,7 +36,7 @@ function getDocFromMap(id: string, docMap: Map<string, Y.Doc>): Y.Doc {
 export function YjsCollaborationProvider({
   roomId,
   username,
-  serverUrl = 'wss://collab-server-production-2ff6.up.railway.app',
+  serverUrl = 'wss://yjs-collab-server-production.up.railway.app',
   children
 }: YjsCollaborationProviderProps) {
   // 提供者工厂函数
