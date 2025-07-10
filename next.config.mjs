@@ -13,7 +13,6 @@ export default bundleAnalyzer({
   typescript: {
     ignoreBuildErrors: true, // ✅ Disables TypeScript errors during the build process
   },
-  swcMinify: true,
   images: {
     remotePatterns: [
       {
