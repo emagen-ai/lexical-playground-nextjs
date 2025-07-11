@@ -13,7 +13,7 @@ import {Doc} from 'yjs';
 const url = new URL(window.location.href);
 const params = new URLSearchParams(url.search);
 const WEBSOCKET_ENDPOINT =
-  params.get('collabEndpoint') || 'ws://localhost:1234';
+  params.get('collabEndpoint') || 'wss://yjs-collab-server-production.up.railway.app';
 const WEBSOCKET_SLUG = 'playground';
 const WEBSOCKET_ID = params.get('collabId') || '0';
 
