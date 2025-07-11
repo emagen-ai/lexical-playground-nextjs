@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS = {
   isAutocomplete: false,
   isCharLimit: false,
   isCharLimitUtf8: false,
-  isCollab: false,
+  isCollab: true,  // 默认开启协作模式
   isMaxLength: false,
   isRichText: true,
   measureTypingPerf: false,
