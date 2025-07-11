@@ -128,8 +128,15 @@ wss.on('connection', (ws, req) => {
 **问题**: "leave_room" 消息无限循环
 **原因**: React 严格模式导致组件重复挂载/卸载
 **解决**: 
-- 禁用 React 严格模式 (`reactStrictMode: false`)
+- 在 `next.config.mjs` 中禁用 React 严格模式：
+  ```javascript
+  export default {
+    reactStrictMode: false,  // 关闭严格模式
+    // ... 其他配置
+  }
+  ```
 - 添加防抖和节流机制
+- 使用 `useRef` 避免重复初始化
 
 ### 4. Railway 部署失败
 **问题**: Nixpacks 无法生成构建计划
@@ -223,6 +230,32 @@ Railway 日志会显示：
 2. **操作历史限制**: 最多保留 1000 个操作
 3. **连接数限制**: 取决于 Railway 实例配置
 4. **带宽优化**: Yjs 只传输增量更新
+
+## ⚙️ 重要配置
+
+### Next.js 配置 (`next.config.mjs`)
+```javascript
+export default {
+  reactStrictMode: false,  // 必须关闭以避免组件重复挂载
+  webpack: (config) => {
+    // WebSocket 相关依赖的外部化配置
+    config.externals.push({
+      bufferutil: "bufferutil",
+      "utf-8-validate": "utf-8-validate",
+    });
+    return config;
+  },
+}
+```
+
+### 默认设置 (`appSettings.ts`)
+```typescript
+export const DEFAULT_SETTINGS = {
+  isCollab: true,  // 默认启用协作
+  isRichText: true,
+  // ... 其他设置
+}
+```
 
 ## 🛠️ 故障排查
 
