@@ -6,7 +6,7 @@
  *
  */
 
-export const isDevPlayground: boolean = false
+export const isDevPlayground: boolean = true
 
 export const DEFAULT_SETTINGS = {
   disableBeforeInput: false,

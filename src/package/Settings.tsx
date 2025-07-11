@@ -64,7 +64,7 @@ export default function Settings(): JSX.Element {
       />
       {showSettings ? (
         <div className="switches">
-          {isRichText && isDevPlayground && (
+          {isRichText && (
             <Switch
               onClick={() => {
                 setOption('isCollab', !isCollab);

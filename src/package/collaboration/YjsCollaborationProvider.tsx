@@ -39,10 +39,13 @@ export function YjsCollaborationProvider({
   serverUrl = 'wss://yjs-collab-server-production.up.railway.app',
   children
 }: YjsCollaborationProviderProps) {
+  console.log('🚀 YjsCollaborationProvider 初始化', { roomId, username, serverUrl });
+  
   // 提供者工厂函数
   const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Y.Doc>) => {
-      console.log('创建 Yjs 提供者，房间ID:', id);
+      console.log('🔧 创建 Yjs 提供者，房间ID:', id);
+      console.log('🌐 连接到服务器:', serverUrl);
       const doc = getDocFromMap(id, yjsDocMap);
       
       // 使用我们的 Railway WebSocket 服务器
@@ -56,15 +59,23 @@ export function YjsCollaborationProvider({
 
       // 监听连接状态
       provider.on('status', (event: any) => {
-        console.log('Yjs Provider 状态:', event.status);
+        console.log('📡 Yjs Provider 状态:', event.status);
       });
 
       provider.on('connection-close', (event: any) => {
-        console.log('Yjs Provider 连接关闭:', event);
+        console.log('❌ Yjs Provider 连接关闭:', event);
       });
 
       provider.on('connection-error', (event: any) => {
-        console.error('Yjs Provider 连接错误:', event);
+        console.error('🚨 Yjs Provider 连接错误:', event);
+      });
+
+      provider.on('connect', () => {
+        console.log('✅ Yjs Provider 已连接');
+      });
+
+      provider.on('disconnect', (event: any) => {
+        console.log('⚠️ Yjs Provider 已断开:', event);
       });
 
       return provider;
